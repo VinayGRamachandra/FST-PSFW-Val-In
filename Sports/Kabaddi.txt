@@ -8,3 +8,5 @@ It is popular in the Indian subcontinent and other surrounding Asian countries. 
 There are two major disciplines of kabaddi: "Punjabi kabaddi", also referred to as "circle styles", comprises traditional forms of the sport that are played on a circular field outdoors, while the "standard style", played on a rectangular court indoors, is the discipline played in major professional leagues and international competitions such as the Asian Games.
 
 This game is known by numerous names in different parts of the Indian subcontinent, such as: kabaddi or chedugudu in Andhra Pradesh and Telangana; kabaddi in Maharashtra, Karnataka and Kerala; kabaddi, komonti or ha-du-du in West Bengal and Bangladesh; baibalaa in Maldives, kauddi or kabaddi in the Punjab region; hu-tu-tu in Western India, ha-do-do in Eastern India; chadakudu in South India; kapardi in Nepal; kabadi or sadugudu in Tamil Nadu; and chakgudu in Sri Lanka.
+
+Modifying this file.
