@@ -1,0 +1,17 @@
+
+
+Total number of Crashes = 520
+Number of B2P commands in B2P Mailbox Specification: 28
+Number of Unique B2P commands in Trace: 30
+
+Number of successful B2P commands : 17560
+Number of Failed B2P commands: 3900
+PM_SECURITY_CONTROL ==> 840 (https://jira.devtools.intel.com/browse/SERVERPMFW-11090)
+SPD_RECOVERY_CTL ==>  20 
+CR_PROXY ==> 820 (https://jira.devtools.intel.com/browse/SERVERPMFW-12859)
+OC_TJ_MAX_OFFSET ==> 620 (https://jira.devtools.intel.com/browse/SERVERPMFW-5560)
+ADDDC_QUIESCE ==> 420 (https://jira.devtools.intel.com/browse/SERVERPMFW-12861, https://jira.devtools.intel.com/browse/SERVERPMFW-12870)
+OOB_INIT_EPP ==> 700 (https://jira.devtools.intel.com/browse/SERVERPMFW-10656)
+PM_MISC_CONTROL ==>  20 
+READ_PM_CONFIG ==> 200 (https://jira.devtools.intel.com/browse/SERVERPMFW-12863, https://jira.devtools.intel.com/browse/SERVERPMFW-12865, https://jira.devtools.intel.com/browse/SERVERPMFW-11088)
+WRITE_PM_CONFIG ==> 260 (https://jira.devtools.intel.com/browse/SERVERPMFW-12863, https://jira.devtools.intel.com/browse/SERVERPMFW-12865, https://jira.devtools.intel.com/browse/SERVERPMFW-11088)
