@@ -1,0 +1,4 @@
+Total number of Crashes = 0
+Number of unique B2P commands in Trace = 30
+Number of Successful B2P commands: 88420
+Number of Failed B2P commands: 22580
