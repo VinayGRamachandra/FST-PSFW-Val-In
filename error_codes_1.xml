@@ -16,7 +16,6 @@
         <rule name="error" code="ILLEGAL_DATA">
             <if>(field.SUB_COMMAND == key.SET_ACDC_LOADLINE) and (field.command_data != globals.FUSE_SET_ACDC_LOADLINE)</if>
             <if>(field.VR_ADDRESS not_in globals.DMR_VALID_VR_ADDRESS)</if>
-            <if>(field.SUB_COMMAND == key.GET_ACDC_LOADLINE) and (field.VR_ADDRESS is_in globals.DMR_VALID_VR_ADDRESS)</if>
             
         </rule>
         <rule name="error" code="INVALID_COMMAND">
@@ -140,13 +139,6 @@
         </rule>
     </DDR_MISC_CONTROL>
 
-    <!--<SPD_RECOVERY_CTL>
-        <rule name="error" code="INVALID_PARAMETERS">
-            <if>(field.SUB_COMMAND != key.SPD_RECOVERY_CONFIG ) and (field.SPD_RECOVERY_ENABLE == 1 ) </if>
-
-        </rule>
-    </SPD_RECOVERY_CTL> -->
-
 
 
     
@@ -182,9 +174,6 @@
         <PCU_MISC_CONFIG_ILLEGAL_MASK>
             <val>3514822149</val>
         </PCU_MISC_CONFIG_ILLEGAL_MASK>
-        <SPD_RECOVERY_CONFIG>
-            <val>0</val>
-        </SPD_RECOVERY_CONFIG>
 
         <!-- VR details -->
         <DMR_VALID_VR_ADDRESS>
