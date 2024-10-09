@@ -1,0 +1,1593 @@
+<mailbox xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mailbox.xsd">
+  <type>internal</type>
+  <endpoint name="ucode/tap" dir="in" />
+  <commands>
+    <command>
+      <name>ZERO</name>
+      <opcode>0x0</opcode>
+      <desc>The zero command; does nothing</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>GET_REVISION</name>
+      <deprecated project="GNR"/>
+      <opcode>0x1</opcode>
+      <desc>Requestor is querying the PCODE revision. Normally this is needed as part of the patch load process.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>EXCLUSIVE_REQUEST_SLOW</name>
+      <deprecated project="GNR"/>
+      <opcode>0x2</opcode>
+      <desc>Requestor is telling PCODE it wants to lock PCODE to service this mailbox. This means that PCODE is
+          not doing anything else except that. This can be used to make things atomic, or simply to have
+          this interface faster. Keeping this state for too long may burn the CPU. Be careful.
+          The lock is done only when the slow loop is at the beginning, that is, out side of all algorithms</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>EXCLUSIVE_REQUEST_FAST</name>
+      <deprecated project="GNR"/>
+      <opcode>0x3</opcode>
+      <desc>Requestor is telling PCODE it wants to lock PCODE to service this mailbox.
+          The lock is done at any place in the slow loop, and may be inside arbitrary slow algorithm.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>EXCLUSIVE_RELEASE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x4</opcode>
+      <desc>Requestor is telling PCODE to release itself from servicing this mailbox.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>SET_RW_POINTER</name>
+      <opcode>0x5</opcode>
+      <desc>Requestor is telling PCODE what address to read or write in data memory.
+          This address is stored in PCODE memory will be incremented by 1/2/4 for each read or write of byte/half/word.
+          The address is assumed to be within range of data/IO (no checks are made).
+          The address is per mailbox, so setting exclusive mode first is non-mandatory.
+          Side-effect of this command is a 32-bit read from the address, after clearing the two low lsbs.
+          (clearing the two lsbs is needed, in order to maintain the read semantics in NHM, but still support
+          byte/half addressing)</desc>
+      <data dir="in">
+        <field>
+          <name>ADDR</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_DATA_WORD</name>
+      <opcode>0x6</opcode>
+      <desc>Requestor is telling PCODE to read data from the (per mailbox) address given before.
+           The pointer must be word aligned.
+           After the data was read, the address will be incremented by 4.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_DATA_WORD</name>
+      <opcode>0x7</opcode>
+      <desc>Requestor is telling PCODE to write data to the (per mailbox) address given before.
+          The pointer must be word aligned.
+          After the data was written, the address will be incremented by 4.</desc>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_DATA_HALF</name>
+      <deprecated project="GNR"/>
+      <opcode>0x8</opcode>
+      <desc>Requestor is telling PCODE to read data from the (per mailbox) address given before.
+          The pointer must be half-word aligned.
+          After the data was read, the address will be incremented by 2.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_DATA_HALF</name>
+      <deprecated project="GNR"/>
+      <opcode>0x9</opcode>
+      <desc>Requestor is telling PCODE to write data to the (per mailbox) address given before.
+          The pointer must be half-word aligned.
+          After the data was written, the address will be incremented by 2.</desc>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>16</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_DATA_BYTE</name>
+      <deprecated project="GNR"/>
+      <opcode>0xa</opcode>
+      <desc>Requestor is telling PCODE to read data from the (per mailbox) address given before.
+          After the data was read, the address will be incremented by 1.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_DATA_BYTE</name>
+      <deprecated project="GNR"/>
+      <opcode>0xb</opcode>
+      <desc>Requestor is telling PCODE to write data to the (per mailbox) address given before.
+          After the data was written, the address will be incremented by 1.</desc>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>CALL_PARAMETERLESS_ROUTINE</name>
+      <deprecated project="GNR"/>
+      <opcode>0xc</opcode>
+      <desc>Requestor is telling PCODE to call a method.
+          The address of the method is given in the parameter, and must be inside PCODE ROM or PATCH area.
+          At this point we support only parameter-less routines, due to the high p-ops count the load/store takes.</desc>
+      <data dir="in">
+        <field>
+          <name>ROUTINE_ADDR</name>
+          <lsb>0</lsb>
+          <num_bits>17</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PMA_CR</name>
+      <deprecated project="GNR"/>
+      <opcode>0xd</opcode>
+      <desc>Requestor is telling PCODE to read a PMA CR
+          Parameters are passed in DATA register:
+          bits 23-16: cr_address
+          bits 30-24: slice_id
+          The return value is the read PMA CR, or timeout error indication.</desc>
+      <interface>
+        <field>
+          <name>FID</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>CR_ADDRESS</name>
+          <lsb>0</lsb>
+          <num_bits>16</num_bits>
+        </field>
+        <field>
+          <name>LOG_ID</name>
+          <lsb>16</lsb>
+          <num_bits>16</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PMA_CR</name>
+      <deprecated project="GNR"/>
+      <opcode>0xe</opcode>
+      <desc>Requestor is telling PCODE to write a PMA CR
+          Parameters are passed in DATA register:
+          bits 23 - 16: cr_address
+          bits 30-24: slice_id
+          bits 7-0: data to write
+          The return value is 0.</desc>
+      <interface>
+        <field>
+          <name>FID</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>CR_ADDRESS</name>
+          <lsb>0</lsb>
+          <num_bits>16</num_bits>
+        </field>
+        <field>
+          <name>LOG_ID</name>
+          <lsb>16</lsb>
+          <num_bits>16</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>PATCH_PREP</name>
+      <deprecated project="GNR"/>
+      <opcode>0xf</opcode>
+      <desc>Requestor is telling PCODE to prepare to patch load.
+          PCODE will do required preparations, acknowledge the command, and then hang itself in an infinite loop.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>PSMI_PREP</name>
+      <opcode>0x10</opcode>
+      <desc>Requestor is telling PCODE to prepare to PSMI sync.
+          PCODE will do required preparations, acknowledge the command, and then hang itself in an infinite loop.</desc>
+      <data dir="in">
+        <field>
+          <name>gt_svm_save_restore</name>
+          <lsb>2</lsb>
+          <num_bits>1</num_bits>
+        </field>
+        <field>
+          <name>io_expose</name>
+          <lsb>1</lsb>
+          <num_bits>1</num_bits>
+        </field>
+        <field>
+          <name>ram_expose</name>
+          <lsb>0</lsb>
+          <num_bits>1</num_bits>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>INTERNAL_RESET_PREP</name>
+      <deprecated project="GNR"/>
+      <opcode>0x11</opcode>
+      <desc>Requestor is telling PCODE to prepare to Internal Reset.
+          PCODE will do required preparations, acknowledge the command, and then hang itself in an infinite loop.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PCS</name>
+      <deprecated project="GNR"/>
+      <opcode>0x12</opcode>
+      <desc>Requestor is telling PCODE to read the PCS
+          UCODE mailbox does not support it, as it does not have the fields and flip-flops for that.</desc>
+      <interface>
+        <field>
+          <name>PARAM1</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>PCS_INDEX</desc>
+        </field>
+        <field>
+          <name>PARAM2</name>
+          <lsb>16</lsb>
+          <num_bits>13</num_bits>
+          <desc>PCS_PARAM</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>Data format defined in pcs_mailbox.xml.</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PCS</name>
+      <deprecated project="GNR"/>
+      <opcode>0x13</opcode>
+      <desc>Requestor is telling PCODE to write the PCS
+          UCODE mailbox does not support it, as it does not have the fields and flip-flips for that.</desc>
+      <interface>
+        <field>
+          <name>PARAM1</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>PCS_INDEX</desc>
+        </field>
+        <field>
+          <name>PARAM2</name>
+          <lsb>16</lsb>
+          <num_bits>13</num_bits>
+          <desc>PCS_PARAM</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>Data format defined in pcs_mailbox.xml.</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>IOSFSB_PROXY</name>
+      <deprecated project="GNR"/>
+      <opcode>0x14</opcode>
+      <desc>Requestor is telling PCODE to perform a GPSB or PMSB access (read or write).
+          Pcode will dump the raw data directly to the IOSFSB_HEADER/PAYLOAD registers without any parsing.
+          It is up to the requestor to build a valid IOSFSB packet.
+          The address of the register is set up by the requestor in the pcode RAM in the following variables,
+          IOSFSB_PROXY_HEADER_0,
+          IOSFSB_PROXY_PAYLOAD_0,
+          IOSFSB_PROXY_PAYLOAD_1,
+          IOSFSB_PROXY_PAYLOAD_2,
+          IOSFSB_PROXY_PAYLOAD_3,
+          IOSFSB_PROXY_PAYLOAD_4,
+          In the case of reads the data will be deposited in IOSFSB_PROXY_PAYLOAD_0/1.</desc>
+      <data dir="in">
+        <field>
+          <name>redirect_to_pmsb</name>
+          <lsb>0</lsb>
+          <num_bits>1</num_bits>
+          <desc>0:no, 1:yes. Used by pcode to direct access to the dedicated PMSB interface</desc>
+        </field>
+      </data>
+      <notes>none - Verify with Post-SI teams</notes>
+    </command>
+    <command>
+      <name>READ_PROCID</name>
+      <opcode>0x20</opcode>
+      <desc>Expose the Mesh stop ID correspoding to the Core ID bit[7:1] and src_inst[0]</desc>
+      <data dir="out">
+        <field>
+          <name>src_inst</name>
+          <lsb>0</lsb>
+          <num_bits>1</num_bits>
+          <desc>Mesh Stop Port ID</desc>
+        </field>
+        <field>
+          <name>mesh_id</name>
+          <lsb>1</lsb>
+          <num_bits>7</num_bits>
+          <desc>Mesh Stop ID</desc>
+        </field>
+        <field>
+          <name>collocated_cha_id</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>Collocated CHA ID. Used by BIOS/SW to understand the SNC affinization. Returns the CHA ID of the collocated cached slice if it is enabled or returns the CHA ID of the first enabled slice in the cluster when the local slice is disabled.</desc>
+        </field>
+      </data>
+    <notes>Was previously called COREID_TO_MESHID. Renamed to align with uCode naming</notes>
+    </command>
+    <command>
+      <name>READ_PEGA_CMD0</name>
+      <opcode>0x21</opcode>
+      <desc>Requestor is asking to read the PEGA CMD0 Register</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PEGA_CMD0</name>
+      <opcode>0x22</opcode>
+      <desc>Requestor is asking to write the PEGA CMD0 Register</desc>
+      <data dir="in">
+        <field>
+          <name>LATENCY_FOR_REARM</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Latency for rearm
+	      Latency to wait after one command before executing it again.
+	      When command has 2nd action enabled this is the time from when the 2nd action is issued until the 1st action is issued again.
+	      Units specified in rearm_latency_units field.
+	      Value of zero indicates that rearming action is disabled.</desc>
+        </field>
+        <field>
+          <name>LATENCY_FOR_ACTION2</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>latency for action2
+	      Latency to wait after one command before executing it again.
+	      When command has 2nd action enabled this is the time from when the 2nd action is issued until the 1st action is issued again.
+	      Units specified in rearm_latency_units field.
+	      Value of zero indicates that rearming action is disabled.</desc>
+        </field>
+        <field>
+          <name>REARM_UNITS</name>
+          <lsb>16</lsb>
+          <num_bits>2</num_bits>
+          <desc>units for the rearm latency
+	      00: units of 640 ns (0.64 us)
+	      01: units of 10240 ns (~10.2 us)
+	      10: units of 163840 ns (~164 us)
+	      11: units of 2621440 ns (~2.6 ms)</desc>
+        </field>
+        <field>
+          <name>ACTION2_UNITS</name>
+          <lsb>18</lsb>
+          <num_bits>2</num_bits>
+          <desc>units for the action2 latency
+	      00: units of 640 ns (0.64 us)
+	      01: units of 10240 ns (~10.2 us)
+	      10: units of 163840 ns (~164 us)
+	      11: units of 2621440 ns (~2.6 ms)</desc>
+        </field>
+        <field>
+          <name>REARM_RAND_LATENCY</name>
+          <lsb>20</lsb>
+          <num_bits>1</num_bits>
+          <desc>Random rearm latency
+	      Use random 8 bit value in place of value specified in rearm_latency field. Units are still specified in rearm_latency_units field.
+	      Note that rearm latency should still be non-zero to indicate that action2 is enabled.</desc>
+        </field>
+        <field>
+          <name>ACTION2_RAND_LATENCY</name>
+          <lsb>21</lsb>
+          <num_bits>1</num_bits>
+          <desc>Use random 8 bit value in place of value specified in rearm_latency field. Units are still specified in rearm_latency_units field.
+	      Note that rearm latency should still be non-zero to indicate that action2 is enabled.</desc>
+        </field>
+        <field>
+          <name>RSVD</name>
+          <lsb>22</lsb>
+          <num_bits>6</num_bits>
+          <desc>Reserved for future</desc>
+        </field>
+        <field>
+          <name>CMD</name>
+          <lsb>28</lsb>
+          <num_bits>3</num_bits>
+          <desc>Type of PEGA command to trigger</desc>
+          <enum desc="" key="NO_COMMAND" val="0x0" />
+          <enum desc="" key="CSTATE_INJECTION" val="0x1" />
+          <enum desc="" key="PSTATE_INJECTION" val="0x2" />
+        </field>
+        <field>
+          <name>RUN_BUSY</name>
+          <lsb>31</lsb>
+          <num_bits>1</num_bits>
+          <desc>Set by user to activate PEGA after setting up the other registers - this will trigger PCode to perform the requested PEGA action.
+	      This bit will be cleared by PCode after sampling is complete and completion code has been set.
+	      User should not change PEGA registers until PCode has cleared run_busy or they risk breaking atomicity of the command and/or having a command dropped.
+	      This will not be protected against in HW.</desc>
+        </field>
+      </data>
+      <data dir="out">
+        <field>
+          <name>CMD</name>
+          <lsb>28</lsb>
+          <num_bits>3</num_bits>
+          <desc>Error Code</desc>
+          <enum desc="" key="NO_ERROR" val="0x0" />
+          <enum desc="" key="INVALID_COMMAND" val="0x1" />
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PEGA_CMD1</name>
+      <opcode>0x23</opcode>
+      <desc>Requestor is asking to read the PEGA CMD1 Register</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PEGA_CMD1</name>
+      <opcode>0x24</opcode>
+      <desc>Requestor is asking to write the PEGA CMD1 Register</desc>
+      <data dir="in">
+        <field>
+          <name>COREMASK</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Provides the cores that need PEGA injection. This field is ignored when random coremask is selected</desc>
+        </field>
+        <field>
+          <name>RANDOM_XSTATE_TARGET</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>One bit per core indicates if the core needs to generate a random target. Otherwise it would use target data from PEGA_CMD2 and PEGA_CMD3.  8 cores at a time.</desc>
+        </field>
+        <field>
+          <name>RANDOM_COREMASK</name>
+          <lsb>16</lsb>
+          <num_bits>1</num_bits>
+          <desc>This bit specifies that PEGA injection should generate its own random coremask instead of using the COREMASK provided</desc>
+        </field>
+        <field>
+          <name>RSVD</name>
+          <lsb>17</lsb>
+          <num_bits>7</num_bits>
+          <desc>Reserved bits</desc>
+        </field>
+        <field>
+          <name>OFFSET</name>
+          <lsb>24</lsb>
+          <num_bits>7</num_bits>
+          <desc>Offset helps to extend the PEGA injections to more than 8 cores. In SKX we dont need more than a 3bit offset</desc>
+        </field>
+        <field>
+          <name>RSVD_1</name>
+          <lsb>31</lsb>
+          <num_bits>1</num_bits>
+          <desc>Reserved bits</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PEGA_CMD2</name>
+      <opcode>0x25</opcode>
+      <desc>Requestor is asking to read the PEGA CMD2 Register</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PEGA_CMD2</name>
+      <opcode>0x26</opcode>
+      <desc>Requestor is asking to write the PEGA CMD2 Register</desc>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>Specifies core 0, 1, 2, 3 target information.  8 bits for each core</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PEGA_CMD3</name>
+      <opcode>0x27</opcode>
+      <desc>Requestor is asking to read the PEGA CMD3 Register</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PEGA_CMD3</name>
+      <opcode>0x28</opcode>
+      <desc>Requestor is asking to write to PEGA CMD3 register</desc>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>Specifies core 4, 5, 6, 7 target information.  8 bits for each core</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_CORE_C6_RESIDENCY_COUNTER_LOW32</name>
+      <deprecated project="GNR"/>
+      <opcode>0x29</opcode>
+      <desc>Read the core C6 residency counter.
+          Returns the lower 32 bits via this command. This command should be followed by READ_CORE_C6_RESIDENCY_COUNTER_HIGH32
+          to read the upper 32 bits of the 64-bit residency counter.</desc>
+      <data dir="in">
+        <field>
+          <name>res_counter_id</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>The C6 residency counter id</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_CORE_C6_RESIDENCY_COUNTER_HIGH32</name>
+      <deprecated project="GNR"/>
+      <opcode>0x2a</opcode>
+      <desc>Read the core C6 residency counter.
+          Returns the upper 32 bits of the 64-bit residency counter.</desc>
+      <data dir="in">
+        <field>
+          <name>res_counter_id</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>The C6 residency counter id</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_COMMAND_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x2b</opcode>
+      <desc>Read the command of latest OC mailbox access</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_DATA_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x2c</opcode>
+      <desc>Read the data of latest OC mailbox access</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>FORCE_DDR_C7_SAVE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x2d</opcode>
+      <desc>Force re-save of DDR registers for C7</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PERF_STAT_DATA</name>
+      <opcode>0x31</opcode>
+      <desc>Reads voltage and ratio for core - ( Deprecated for GNR, this command is supported for GRR and SRF )</desc>
+      <data dir="in">
+        <field>
+          <name>VOLTAGE</name>
+          <lsb>0</lsb>
+          <num_bits>16</num_bits>
+          <desc>The voltage value read from IO_WP_IA regs for the core index</desc>
+        </field>
+        <field>
+          <name>RATIO</name>
+          <lsb>16</lsb>
+          <num_bits>8</num_bits>
+          <desc>The ratio value read from IO_WP_IA regs for the core index</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>WRITE_PMSB_CR_DATA</name>
+      <opcode>0x32</opcode>
+      <desc>Provides the 32-bit Write Data for the WRITE_PMSB_CR command</desc>
+      <data dir="in">
+        <field>
+          <name>WRITE_DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+        </field>
+      </data>
+      <notes>
+    WRITE_PMSB_CR_DATA should be used first to provide the write data.
+    The WRITE_PMSB_CR command is used next to provide the PortID/Offset
+    and execute the command.
+    
+    On receiving the WRITE_PMSB_CR_DATA command, primecode will store the
+    DATA in an internal variable for use when the new WRITE_PMSB_CR command 
+    is issued.
+    >Note: Only one storage element is present, it is up to the user to 
+    ensure the mutex/atomicity of the WRITE_PMSB_CR_DATA and WRITE_PMSB_CR
+    commands.
+    > The WRITE_PMSB_CR command will always use the most recent DATA value.
+    
+    This command will always return success
+    Return data is always 0.
+    
+    > Note: This command is used by silicon debug teams to access PMSB
+    registers using Patch23 mechanism.
+      </notes>
+    </command>
+    <command>
+      <name>READ_PMSB_CR</name>
+      <opcode>0x33</opcode>
+      <desc>Reads voltage and ratio for core</desc>
+      <interface>
+        <field>
+          <name>FID</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>CR_OFFSET</name>
+          <lsb>0</lsb>
+          <num_bits>16</num_bits>
+        </field>
+        <field>
+          <name>PORT_ID</name>
+          <lsb>16</lsb>
+          <num_bits>16</num_bits>
+        </field>
+      </data>
+      <data dir="out">
+        <field>
+          <name>RETURN_DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+        </field>
+      </data>    
+      <notes>
+    This command targets an arbitrary PMSB CR.
+    Primecode doesn't not qualify for the PortID, nor the CR offset. It is up to the
+    user of this command to target valid registers.
+    
+    Port ID and CR Address are passed in the DATA register.
+    Return data contains the information read from the PMA CR.
+    
+    Completion Status will be SUCCESSFUL, IOSFSB_POWERED_DOWN, or IOSFSB_UNSUPPORTED
+    
+    > Note: This command is added to support SVOS access to PMSB registers
+    for debug. Ucode does not have a use for this command.
+      </notes>
+    </command>
+    <command>
+      <name>WRITE_PMSB_CR</name>
+      <opcode>0x34</opcode>
+      <desc>Write PMSB CR of the core which initiates the write request</desc>
+      <interface>
+         <field>
+          <name>FID</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>CR_OFFSET</name>
+          <lsb>0</lsb>
+          <num_bits>16</num_bits>
+        </field>
+        <field>
+          <name>PORT_ID</name>
+          <lsb>16</lsb>
+          <num_bits>16</num_bits>
+        </field>
+      </data>
+      <data dir="out">
+        <field>
+          <name>RETURN_DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+        </field>
+      </data>      
+      <notes>
+    This command targets an arbitrary PMSB CR.
+    Primecode doest not qualify for the PortID, nor the CR offset. It is up to the
+    user of this command to target valid registers.
+    
+    Port ID and CR Address are passed in the DATA register.
+    Return data is always 0.
+    
+    > Note: There is no check to ensure WRITE_PMSB_CR_DATA was invoked first.
+    The burden is on the owner to ensure the WRITE_DATA is proved before
+    invoking this command. The WRITE_DATA is provided using WRITE_PMSB_CR_DATA command.
+    
+    > Note: This command is added to support SVOS access to PMSB registers
+    for debug. Ucode does not have a use for this command. 
+      </notes>
+    </command>
+    <command>
+      <name>READ_PPIN_LOWER</name>
+      <deprecated project="GNR"/>
+      <opcode>0x35</opcode>
+      <desc>Command for reading the lower 32 bits of PPIN from fuses</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>READ_PPIN_UPPER</name>
+      <deprecated project="GNR"/>
+      <opcode>0x36</opcode>
+      <desc>Command for reading the upper 32 bits of PPIN from fuses</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>RESIDENCY_CTR_CONFIG</name>
+      <deprecated project="GNR"/>
+      <opcode>0x38</opcode>
+      <desc>Configures the pstate buckets with the 64 bit data.
+          (needs two access 32bit each time) - read/write on SKX</desc>
+      <interface>
+        <field>
+          <name>INDEX</name>
+          <lsb>8</lsb>
+          <num_bits>1</num_bits>
+          <desc>Word Index (0, 1)</desc>
+        </field>
+        <field>
+          <name>RSVD</name>
+          <lsb>9</lsb>
+          <num_bits>3</num_bits>
+          <desc>Reserved for expansion of index field</desc>
+        </field>
+        <field>
+          <name>READ_REQUEST</name>
+          <lsb>12</lsb>
+          <num_bits>1</num_bits>
+          <desc>If 1, this is a read; else it's the legacy write</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>DATA</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>Residency counter config data word.</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>DFX_SCRATCHPAD</name>
+      <opcode>0x39</opcode>
+      <desc>Provides access to a 64 DWord DFX Scratchpad</desc>
+      <interface>
+        <field>
+	  <name>WRITE</name>
+	  <lsb>8</lsb>
+	  <num_bits>1</num_bits>
+	  <desc>Specify Read/Write</desc>
+	  <enum desc="" key="READ"  val="0x0"/>
+	  <enum desc="" key="WRITE" val="0x1"/>
+	</field>
+	<field>
+	  <name>OFFSET</name>
+	  <lsb>16</lsb>
+	  <num_bits>8</num_bits>
+	  <desc>DWord Offset into the DFX Scratchpad</desc>
+	</field>
+      </interface>
+        <data dir="in">
+	  <field>
+	    <name>WRITE_DATA</name>
+	    <lsb>0</lsb>
+	    <num_bits>32</num_bits>
+	    <desc>Scratchpad write data</desc>
+	  </field>
+	</data>
+	<data dir="out">
+	  <field>
+	    <name>READ_DATA</name>
+	    <lsb>0</lsb>
+	    <num_bits>32</num_bits>
+	    <desc>Scratchpad read data</desc>
+	  </field>
+	</data>
+	<notes> This command provides read/write access to a DFX Scratchpad. Note: GNR supports a 64 DWord Scratchpad.  Specifying an OFFSET greater than 63 will result in an INVALID_PARAMETER completion code.
+        Read/write accesses within the range 0:63 will result in a NO_ERROR completion code. Expected completions codes: 0x0 - NO_ERROR, 0x5 - INVALID_PARAMETER.</notes>
+    </command>
+    <command>
+      <name>DFX_COMMAND</name>
+      <deprecated project="GNR"/>
+      <opcode>0x3a</opcode>
+      <desc>Command mailbox DFX handler</desc>
+      <data dir="in">
+        <field>
+          <name>OPCODE</name>
+          <lsb>0</lsb>
+          <num_bits>4</num_bits>
+          <desc>0 = trigger Serial PECI, 1 = trigger Inband PECI, 2 = DFX_LIMIT_MAX_ICCP_GRANT rest = error</desc>
+        </field>
+        <field>
+          <name>DFX_DATA</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>Data value for opcode (see pcode src for details)</desc>
+        </field>
+      </data>
+      <notes>none - verify with Post-SI team</notes>
+    </command>
+    <command>
+      <name>HWP_CAPABILITIES_MSR</name>
+      <opcode>0x3d</opcode>
+      <desc>Pcode side of virtual MSR support for reading HWP capabilities register</desc>
+      <interface>
+        <field>
+          <name>RUN_BUSY</name>
+          <lsb>31</lsb>
+          <num_bits>1</num_bits>
+          <desc>Run Busy</desc>
+        </field>
+        <field>
+          <name>WRITE</name>
+          <lsb>23</lsb>
+          <num_bits>1</num_bits>
+          <desc>0 = READ, 1 = WRITE</desc>
+        </field>
+        <field>
+          <name>Reserved</name>
+          <lsb>22</lsb>
+          <num_bits>1</num_bits>
+          <desc>Reserved</desc>
+        </field>
+        <field>
+          <name>MSR_ADDRESS</name>
+          <lsb>9</lsb>
+          <num_bits>13</num_bits>
+          <desc>MSR Address</desc>
+        </field>
+        <field>
+          <name>WORD_SELECT</name>
+          <lsb>8</lsb>
+          <num_bits>1</num_bits>
+          <desc>0 = LOW, 1 = HIGH</desc>
+        </field>
+        <field>
+          <name>CMD</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>MSR Command</desc>
+        </field>
+      </interface>
+      <notes>none - move to VSEC</notes>
+    </command>
+    <command>
+      <name>GENERIC_VIRTUAL_MSR</name>
+      <deprecated project="GNR"/>
+      <opcode>0x3e</opcode>
+      <desc>Pcode side of virtual MSR support</desc>
+      <interface>
+        <field>
+          <name>WRITE</name>
+          <lsb>23</lsb>
+          <num_bits>1</num_bits>
+          <desc>0 = READ, 1 = WRITE</desc>
+        </field>
+        <field>
+          <name>DWORD_SELECT</name>
+          <lsb>22</lsb>
+          <num_bits>1</num_bits>
+          <desc>0 = LOW, 1 = HIGH</desc>
+        </field>
+        <field>
+          <name>RESERVED</name>
+          <lsb>21</lsb>
+          <num_bits>1</num_bits>
+          <desc>Reserved</desc>
+        </field>
+        <field>
+          <name>MSR_ADDRESS</name>
+          <lsb>8</lsb>
+          <num_bits>13</num_bits>
+          <desc>MSR Address</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>VALUE</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>This can be either Interface or Data for OS Mailbox. Ignore this for Mem capacity sku</desc>
+        </field>
+      </data>
+      <notes>none - move to VSEC</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX</name>
+      <deprecated project="GNR"/>
+      <opcode>0x40</opcode>
+      <desc>Commands to access the OC mailbox</desc>
+      <data dir="in">
+        <field>
+          <name>ENCODING_OC_MAILBOX</name>
+          <lsb>6</lsb>
+          <num_bits>1</num_bits>
+          <desc>Encoding OC mailbox bit</desc>
+        </field>
+      </data>
+      <notes>none - move to VSEC</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_READ_OC_CAPABILITY</name>
+      <deprecated project="GNR"/>
+      <opcode>0x41</opcode>
+      <desc>SW may detect OC capability, per domain, using this read only command</desc>
+      <interface>
+        <field>
+          <name>DOMAIN</name>
+          <lsb>8</lsb>
+          <num_bits>2</num_bits>
+          <desc>Domain ID (IA=0, GT(unsliced)=1, CLR (Ring) =2, SA=3)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>MAX_OC_RATIO_LIMIT</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Fused max overclocking ratio limit</desc>
+        </field>
+        <field>
+          <name>RATIO_OC_SUPPORTED</name>
+          <lsb>8</lsb>
+          <num_bits>1</num_bits>
+          <desc>Ratio overclocking supported</desc>
+        </field>
+        <field>
+          <name>VOLTAGE_OVERRIDE_SUPPORTED</name>
+          <lsb>9</lsb>
+          <num_bits>1</num_bits>
+          <desc>Voltage overrides supported</desc>
+        </field>
+        <field>
+          <name>VOLTAGE_OFFSET_SUPPORTED</name>
+          <lsb>10</lsb>
+          <num_bits>1</num_bits>
+          <desc>Voltage offset supported</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_READ_PER_CORE_RATIO_LIMITS_CAPABILITY</name>
+      <deprecated project="GNR"/>
+      <opcode>0x42</opcode>
+      <desc>Software may detect per-core ratio limits for overclocking using this read-only mailbox service.
+          Only the IA domain is supported</desc>
+      <interface>
+        <field>
+          <name>CORE_INDEX</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>Core Index = n (0 - 1C to 4C, 1 - 5C to 8C, and so on.)</desc>
+        </field>
+        <field>
+          <name>FUSED_RESOLVED</name>
+          <lsb>16</lsb>
+          <num_bits>1</num_bits>
+          <desc>0 = Fused Limits, 1 = Resolved Limits</desc>
+        </field>
+        <field>
+          <name>CDYN_LEVEL</name>
+          <lsb>17</lsb>
+          <num_bits>4</num_bits>
+          <desc>CDYN Level - (0 = IA/SSE, 1 = CDYN2, 2 = CDYN3, 3 = CDYN4 ...)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>RATIO1</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Ratio for core 4n+1</desc>
+        </field>
+        <field>
+          <name>RATIO2</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>Ratio for core 4n+2</desc>
+        </field>
+        <field>
+          <name>RATIO3</name>
+          <lsb>16</lsb>
+          <num_bits>8</num_bits>
+          <desc>Ratio for core 4n+3</desc>
+        </field>
+        <field>
+          <name>RATIO4</name>
+          <lsb>24</lsb>
+          <num_bits>8</num_bits>
+          <desc>Ratio for core 4n+4</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_READ_BCLK_FREQ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x45</opcode>
+      <desc>This command provides the current BCLK frequency in KHz as sampled by the internal controller</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_READ_FUSED_P0_AND_VOLTAGE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x47</opcode>
+      <desc>This command returns the fused P0 ratio and voltage. This is useful for SW to program the adaptive
+          V/F curve when the max frequency is not divisible by a 100. Can also be used to enumerate the per
+          core OC headroom based on their voltage.</desc>
+      <interface>
+        <field>
+          <name>DOMAIN</name>
+          <lsb>8</lsb>
+          <num_bits>2</num_bits>
+          <desc>Domain ID (IA=0, GT(unsliced)=1, CLR (Ring) =2, SA=3)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>RESERVED0</name>
+          <lsb>20</lsb>
+          <num_bits>12</num_bits>
+          <desc>reserved</desc>
+        </field>
+        <field>
+          <name>FUSED_P0_VOLTAGE</name>
+          <lsb>8</lsb>
+          <num_bits>12</num_bits>
+          <desc>Fused P0 voltage. U12.2.10V</desc>
+        </field>
+        <field>
+          <name>FUSED_P0_RATIO</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Fused P0 ratio</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_VF_OVERRIDE_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x50</opcode>
+      <desc>Will read the current OC mailbox voltage/ratio overrides from RAM and return.
+            What is returned here is essentially what is written by write version of this
+            command.</desc>
+      <interface>
+        <field>
+          <name>DOMAIN</name>
+          <lsb>8</lsb>
+          <num_bits>4</num_bits>
+          <desc>Domain ID (IA=0, GT(unsliced)=1, CLR (Ring) =2, SA=3)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>MAX_OC_RATIO</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Max OC Ratio</desc>
+        </field>
+        <field>
+          <name>VOLTAGE_TARGET</name>
+          <lsb>8</lsb>
+          <num_bits>12</num_bits>
+          <desc>Voltage Target, U12.2.10V</desc>
+        </field>
+        <field>
+          <name>TARGET_MODE</name>
+          <lsb>20</lsb>
+          <num_bits>1</num_bits>
+          <desc>Voltage target mode.  1=override, 0=PCU Adaptive</desc>
+        </field>
+        <field>
+          <name>VOLTAGE_OFFSET</name>
+          <lsb>21</lsb>
+          <num_bits>11</num_bits>
+          <desc>Voltage offset, S11.0.10V, +/-500mV</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_VF_OVERRIDE_WRITE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x51</opcode>
+      <desc>This cmd makes the necessary voltage adjustments for a specific domain.
+           Voltage adjustments can be applied in 3 possible ways:
+           1. As an offset
+           2. As an overwrite on an existing voltage (override mode)
+           3. As an interpolated extension (PCU adaptive mode) where the MAX ratio is also passed in.</desc>
+      <interface>
+        <field>
+          <name>DOMAIN</name>
+          <lsb>8</lsb>
+          <num_bits>4</num_bits>
+          <desc>Domain ID (IA=0, GT(unsliced)=1, CLR (Ring) =2, SA=3)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>MAX_OC_RATIO</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Max OC Ratio</desc>
+        </field>
+        <field>
+          <name>VOLTAGE_TARGET</name>
+          <lsb>8</lsb>
+          <num_bits>12</num_bits>
+          <desc>Voltage Target, U12.2.10V</desc>
+        </field>
+        <field>
+          <name>TARGET_MODE</name>
+          <lsb>20</lsb>
+          <num_bits>1</num_bits>
+          <desc>Voltage target mode.  1=override, 0=PCU Adaptive</desc>
+        </field>
+        <field>
+          <name>VOLTAGE_OFFSET</name>
+          <lsb>21</lsb>
+          <num_bits>11</num_bits>
+          <desc>Voltage offset, S11.0.10V, +/-500mV</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_SVID_CONFIG_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x52</opcode>
+      <desc>Returns the current pcode SVID settings from the local pcode variables in RAM.
+          These are essentially the values written by SVID_CONFIG_WRITE (W) cmd.</desc>
+      <interface>
+        <field>
+          <name>SVID_ID</name>
+          <lsb>8</lsb>
+          <num_bits>2</num_bits>
+          <desc>SVID ID (0=VccIN, 1=VccSA, 2=VccIO)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>VOLTAGE_TARGET</name>
+          <lsb>0</lsb>
+          <num_bits>12</num_bits>
+          <desc>SVID Voltage Target</desc>
+        </field>
+        <field>
+          <name>SVID_DISABLE</name>
+          <lsb>31</lsb>
+          <num_bits>1</num_bits>
+          <desc>SVID Disable (sticky across warm reset)</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_SVID_CONFIG_WRITE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x53</opcode>
+      <desc>This cmd is used to modify the input voltages that feed the CPU.
+          A voltage target can be specified for the passed in VR id.
+          Also, note that this cmd can lock (in a sticky manner)
+          any further voltage updates on VRs using the passed in "SVID Disable" bit.</desc>
+      <interface>
+        <field>
+          <name>SVID_ID</name>
+          <lsb>8</lsb>
+          <num_bits>2</num_bits>
+          <desc>SVID ID (0=VccIN, 1=VccSA, 2=VccIO)</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>VOLTAGE_TARGET</name>
+          <lsb>0</lsb>
+          <num_bits>12</num_bits>
+          <desc>SVID Voltage Target</desc>
+        </field>
+        <field>
+          <name>SVID_DISABLE</name>
+          <lsb>31</lsb>
+          <num_bits>1</num_bits>
+          <desc>SVID Disable (sticky across warm reset)</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_MISC_GLOBAL_CONFIG_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x54</opcode>
+      <desc>Returns the content of the local pcode variable OC_MISC_GLOBAL_CONFIG_COMMAND
+           This variable is essentially set during the Misc global config command
+           As a result, pcode here is simply returning what was written using
+           the WRITE version of this command</desc>
+      <data dir="in">
+        <field>
+          <name>DIS_FIVR_FAULTS</name>
+          <lsb>0</lsb>
+          <num_bits>1</num_bits>
+          <desc>Disable FIVR Faults</desc>
+        </field>
+        <field>
+          <name>DIS_FIVR_EFF</name>
+          <lsb>1</lsb>
+          <num_bits>1</num_bits>
+          <desc>Disable FIVR Efficiency Management</desc>
+        </field>
+        <field>
+          <name>EN_PER_CORE_MODE</name>
+          <lsb>3</lsb>
+          <num_bits>1</num_bits>
+          <desc>Enable Per Core Mode</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_MISC_GLOBAL_CONFIG_WRITE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x55</opcode>
+      <desc>Write to MISC_GLOBAL_CONFIG</desc>
+      <data dir="in">
+        <field>
+          <name>DIS_FIVR_FAULTS</name>
+          <lsb>0</lsb>
+          <num_bits>1</num_bits>
+          <desc>Disable FIVR Faults</desc>
+        </field>
+        <field>
+          <name>DIS_FIVR_EFF</name>
+          <lsb>1</lsb>
+          <num_bits>1</num_bits>
+          <desc>Disable FIVR Efficiency Management</desc>
+        </field>
+        <field>
+          <name>EN_PER_CORE_MODE</name>
+          <lsb>3</lsb>
+          <num_bits>1</num_bits>
+          <desc>Enable Per Core Mode</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_CDYN_TURBO_LIMIT_OFFSET_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x5a</opcode>
+      <desc>Returns the content of the CDYN turbo limit offsets from pcode RAM.
+           These variables are essentially set during the CDYN Turbo Limit
+           Offset Write (W) command. As a result, pcode here is simply
+           returning what was written using the WRITE version of this command</desc>
+      <data dir="in">
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET1</name>
+          <lsb>0</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN1 offset from CDYN1 turbo limit</desc>
+        </field>
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET2</name>
+          <lsb>5</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN2 offset from CDYN2 turbo limit</desc>
+        </field>
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET3</name>
+          <lsb>10</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN3 offset from CDYN3 turbo limit</desc>
+        </field>
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET4</name>
+          <lsb>15</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN4 offset from CDYN4 turbo limit</desc>
+        </field>
+        <field>
+          <name>RESERVED0</name>
+          <lsb>20</lsb>
+          <num_bits>12</num_bits>
+          <desc>Reserved</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_CDYN_TURBO_LIMIT_OFFSET_WRITE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x5b</opcode>
+      <desc>In SKX, while setting the turbo ratio limits using the MSR or PCS interfaces,
+          we utilize an offset based mechanism for different CDYN levels.
+          More specifically, using this OC mbox cmd, we set different turbo limit
+          offsets for different CDYN levels. Then, these offsets are used by pcode
+          to compute the resolved turbo ratio limits. The offsets are essentially
+          values that will be subtracted from the CDYN1 turbo ratio limit for that
+          specific CDYN level and core count</desc>
+      <data dir="in">
+        <field>
+          <name>RESERVED0</name>
+          <lsb>0</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN1 offset from CDYN1 turbo limit</desc>
+        </field>
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET2</name>
+          <lsb>5</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN2 offset from CDYN2 turbo limit</desc>
+        </field>
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET3</name>
+          <lsb>10</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN3 offset from CDYN3 turbo limit</desc>
+        </field>
+        <field>
+          <name>CDYN_TURBO_LIMIT_OFFSET4</name>
+          <lsb>15</lsb>
+          <num_bits>5</num_bits>
+          <desc>CDYN4 offset from CDYN4 turbo limit</desc>
+        </field>
+        <field>
+          <name>RESERVED1</name>
+          <lsb>20</lsb>
+          <num_bits>12</num_bits>
+          <desc>Reserved</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_FCT_RATIO_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x5c</opcode>
+      <desc>Returns the FCT data on the requested core</desc>
+      <interface>
+        <field>
+          <name>RESERVED</name>
+          <lsb>0</lsb>
+          <num_bits>32</num_bits>
+          <desc>Reserved</desc>
+        </field>
+      </interface>
+      <data dir="in">
+        <field>
+          <name>CURRENT_MAX_FCT_RATIO</name>
+          <lsb>0</lsb>
+          <num_bits>8</num_bits>
+          <desc>Current Max FCT ratio for this core</desc>
+        </field>
+        <field>
+          <name>FUSED_MAX_FCT_RATIO</name>
+          <lsb>8</lsb>
+          <num_bits>8</num_bits>
+          <desc>Fused Max FCT ratio for this core</desc>
+        </field>
+        <field>
+          <name>FCT_INDEX</name>
+          <lsb>16</lsb>
+          <num_bits>8</num_bits>
+          <desc>Current index in the FCT sorted list. Lower = better</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>OC_MAILBOX_CMD_FCT_RATIO_WRITE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x5d</opcode>
+      <desc>Attempts to overclock the FCT max ratio on requested core</desc>
+      <data dir="in">
+        <field>
+          <name>MAX_CORE_RATIO</name>
+          <lsb>0</lsb>
+          <num_bits>9</num_bits>
+          <desc>New max FCT ratio for this core</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>PATCH_DONE</name>
+      <deprecated project="GNR"/>
+      <opcode>0x60</opcode>
+      <desc>Requestor is indicating that the patch load has completed.
+          This is used by the OOB_MSM to indicate end of patch.
+          PCODE does not use this instruction, after a PATCH_PREP a uController reset is required to end the patch sequence.</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>PFAT_READ</name>
+      <deprecated project="GNR"/>
+      <opcode>0x80</opcode>
+      <desc>Commands to access PFAT Persistent Data</desc>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>PFAT_WRITE</name>
+      <deprecated project="GNR"/>
+      <opcode>0xc0</opcode>
+      <desc>Commands to access PFAT Persistent Data</desc>
+      <data dir="in">
+        <field>
+          <name>ENCODING_INDEX</name>
+          <lsb>0</lsb>
+          <num_bits>6</num_bits>
+          <desc>Even index for low, Odd index for high. Look up in an array of 14 words</desc>
+        </field>
+        <field>
+          <name>ENCODING_RW</name>
+          <lsb>6</lsb>
+          <num_bits>1</num_bits>
+          <desc>0:Read, 1:Write</desc>
+        </field>
+        <field>
+          <name>ENCODING_PFAT</name>
+          <lsb>7</lsb>
+          <num_bits>1</num_bits>
+          <desc>PFAT</desc>
+        </field>
+      </data>
+      <notes>none</notes>
+    </command>
+    <command>
+      <name>ASSERT_ERR0</name>
+      <opcode>0xc1</opcode>
+      <desc>Report a CE/UCNA to PCode so that PCode can assert the ERR0 pin.  Part of SMM elimination.</desc>
+      <notes>none</notes>
+    </command>
+  </commands>
+  <completion_codes>
+    <completion_code>
+      <name>NONE</name>
+      <encoding>0x0</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>INVALID_COMMAND</name>
+      <encoding>0x1</encoding>
+      <desc>For bad cmd encodings</desc>
+    </completion_code>
+    <completion_code>
+      <name>TIMEOUT</name>
+      <encoding>0x2</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>CORE_RING_UNAVAILABLE</name>
+      <encoding>0x3</encoding>
+      <desc>For bad data with good cmd (i.e. attempt to write reserved bits, etc)</desc>
+    </completion_code>
+    <completion_code>
+      <name>CORE_RING_WAKE_TIMEOUT</name>
+      <encoding>0x4</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>INVALID_PARAMETERS</name>
+      <encoding>0x5</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>TRY_AGAIN</name>
+      <encoding>0x6</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>CMD_NOT_AVAILABLE</name>
+      <encoding>0x7</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>GENERAL_ERROR</name>
+      <encoding>0xff</encoding>
+      <desc>none</desc>
+    </completion_code>
+    <completion_code>
+      <name>IOSFSB_UNSUPPORTED</name>
+      <encoding>0x38</encoding>
+      <desc>IOSF-SB returned UNSUPPORTED competion response</desc>
+    </completion_code>
+    <completion_code>
+      <name>IOSFSB_POWERED_DOWN</name>
+      <encoding>0x39</encoding>
+      <desc>IOSF-SB returned POWERED_DOWN competion response</desc>
+    </completion_code>
+  </completion_codes>
+  <reg_spec> 
+    <mbox_access access_type="RW" mbox="internal" />
+    <interface size="32">
+      <field>
+        <name>COMMAND</name>
+        <lsb>0</lsb>
+        <num_bits>8</num_bits>
+        <desc>None</desc>
+      </field>
+      <field>
+        <name>PARAM1_RESERVED</name>
+        <lsb>8</lsb>
+        <num_bits>8</num_bits>
+        <desc>None</desc>
+      </field>
+      <field>
+        <name>PARAM2_RESERVED</name>
+        <lsb>16</lsb>
+        <num_bits>8</num_bits>
+        <desc>None</desc>
+      </field>
+      <field>
+        <name>RESERVED31</name>
+        <lsb>24</lsb>
+        <num_bits>7</num_bits>
+        <desc>None</desc>
+      </field>
+      <field>
+        <name>RUN_BUSY</name>
+        <lsb>31</lsb>
+        <num_bits>1</num_bits>
+        <desc>None</desc>
+      </field>
+    </interface>
+    <data size="64">
+      <field>
+        <name>DATA_RESERVED</name> <!--To distinguish from valid DATA bits used per command-->
+        <lsb>0</lsb>
+        <num_bits>64</num_bits>
+        <desc>None</desc>
+      </field>
+    </data>
+  </reg_spec>
+
+</mailbox>
