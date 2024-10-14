@@ -1,0 +1,203 @@
+<?xml version="1.0"?>
+
+<bios_error_codes>
+
+
+    <WRITE_PCU_MISC_CONFIG>
+        <rule name="error" code="ILLEGAL_DATA">
+            <if>(field.command_data &amp; globals.PCU_MISC_CONFIG_ILLEGAL_MASK)</if> <!--&amp; -->
+        </rule>
+    </WRITE_PCU_MISC_CONFIG>
+    <SVID_VR_HANDLER>
+        <rule name="error" code="VR_INTERFACE_LOCKED">
+            <if>(field.SUB_COMMAND == key.SET_ACDC_LOADLINE) and (tag.timing &gt; globals.CPL3)</if>
+            <if>(field.SUB_COMMAND == key.SET_IMON_CONFIG) and (tag.timing &gt; globals.CPL3)</if>
+        </rule>
+        <rule name="error" code="ILLEGAL_DATA">
+            <if>(field.SUB_COMMAND == key.SET_ACDC_LOADLINE) and (field.command_data != globals.FUSE_SET_ACDC_LOADLINE)</if>
+            <if>(field.VR_ADDRESS not_in globals.DMR_VALID_VR_ADDRESS)</if>
+            
+        </rule>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(globals.SVID_NOT_PRESENT == 0)</if>
+        </rule>
+    </SVID_VR_HANDLER>
+
+    <NEAR_TDP>
+        <rule name="error" code="UNSUPPORTED_COMMAND">
+            <if>(globals.FUSE_NEAR_TDP == 0 ) or (globals.FUSE_OC_ENABLED == 1) </if>
+                
+        </rule>
+    </NEAR_TDP>
+
+     
+    <MISC_WORKAROUND_ENABLE>
+        <rule name="error" code="INVALID_WORKAROUND">
+            <if>(field.command_data != 0)</if>
+        </rule>
+    </MISC_WORKAROUND_ENABLE>   
+
+    <FAST_RAPL_NSTRIKE_PL2_DUTY_CYCLE>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(globals.ALWAYS_TRUE == 1)</if>
+        </rule>
+    </FAST_RAPL_NSTRIKE_PL2_DUTY_CYCLE>
+    <VDD_RAMP>
+        <rule name="error" code="ILLEGAL_DATA">
+            <if>(field.ADDR != globals.DMR_VALID_VR_DRAM_ADDR)</if>
+                
+        </rule>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(globals.SVID_IP_PRESENT == 0)</if>
+        </rule>
+    </VDD_RAMP>
+
+    <ADDDC_QUIESCE>
+        <rule name="error" code="ILLEGAL_DATA">
+            <if>(field.command_data != 0)</if>
+        </rule>
+        
+    </ADDDC_QUIESCE>
+
+    <QUIESCE_PECI>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(tag.timing &gt; globals.CPL3)</if>
+        </rule>
+    </QUIESCE_PECI>
+
+
+    <UNQUIESCE_PECI>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(tag.timing &gt; globals.CPL3)</if>
+        </rule>
+    </UNQUIESCE_PECI>
+
+
+    <READ_PM_CONFIG>
+        <rule name="error" code="INVALID_COMMAND">
+             <if>(field.SUB_COMMAND != globals.PM_CONFIG_SUBCMD_MIN_ICCP_LEVEL) and (field.SUB_COMMAND != globals.PM_CONFIG_SUBCMD_PROG_SSC_CONTROL)</if>
+        </rule>
+     </READ_PM_CONFIG>
+     
+     <WRITE_PM_CONFIG>
+         <rule name="error" code="INVALID_COMMAND">
+             <if>(field.SUB_COMMAND != globals.PM_CONFIG_SUBCMD_MIN_ICCP_LEVEL) and (field.SUB_COMMAND != globals.PM_CONFIG_SUBCMD_PROG_SSC_CONTROL)</if>
+         </rule>
+     </WRITE_PM_CONFIG>
+
+    <SET_CORE_MESH_RATIO>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(tag.timing &gt; globals.CPL3)</if>
+        </rule>
+    </SET_CORE_MESH_RATIO>
+
+    <OOB_INIT_EPP>
+        <rule name="error" code="ILLEGAL_DATA">
+            <if>(field.READ_WRITE == 0)</if>
+        </rule>
+    </OOB_INIT_EPP>
+
+    <IO_CONFIG>
+        <rule name="error" code="INVALID_COMMAND">
+          <if>(tag.timing &gt; globals.CPL4)</if>
+        </rule>
+    </IO_CONFIG>
+
+    <GET_PSYS_INFO>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(globals.SVID_IP_PRESENT == 0)</if>
+        </rule>
+    </GET_PSYS_INFO>
+
+    <PSYS_CONFIG>
+        <rule name="error" code="INVALID_COMMAND">
+            <if>(tag.timing &gt; globals.CPL3)</if>
+        </rule>
+    </PSYS_CONFIG>
+
+    <PM_MISC_CONTROL>
+        <rule name="error" code="ERR_INTERFACE_LOCKED_OBB">
+            <if>(field.READ_WRITE == 1) and (globals.OPC_THERMAL_MONITOR_INBAND_LOCK == 1)</if>
+        </rule>
+    </PM_MISC_CONTROL>
+
+    <DDR_MISC_CONTROL>
+        <rule name="error" code="BAD_VR_ADDR" >
+            <if>(field.PMON_ADDRESS_0 != globals.DMR_VALID_VR_DRAM_ADDR) and (field.VALID_0 == 1)</if>
+            <if>(field.PMON_ADDRESS_1 != globals.DMR_VALID_VR_DRAM_ADDR) and (field.VALID_1 == 1)</if>
+            <if>(field.PMON_ADDRESS_2 != globals.DMR_VALID_VR_DRAM_ADDR) and (field.VALID_2 == 1)</if>
+            <if>(field.PMON_ADDRESS_3 != globals.DMR_VALID_VR_DRAM_ADDR) and (field.VALID_3 == 1)</if>              
+        </rule>
+    </DDR_MISC_CONTROL>
+
+
+
+    
+    <spec_globals>
+        <!-- CPL Phase -->
+        <CPL1>
+            <val>1</val>
+        </CPL1>
+        <CPL2>
+            <val>2</val>
+        </CPL2>
+        <CPL3>
+            <val>3</val>
+        </CPL3>
+        <CPL4>
+            <val>4</val>
+        </CPL4>
+
+        <!-- Fuse values -->
+        <FUSE_SET_ACDC_LOADLINE>
+            <val>1</val>
+        </FUSE_SET_ACDC_LOADLINE>
+        <FUSE_SET_IMON_CONFIG>
+            <val>1</val>
+        </FUSE_SET_IMON_CONFIG>
+        <FUSE_NEAR_TDP>
+            <val>0</val> <!-- Value taken from fuse_def -->
+        </FUSE_NEAR_TDP>
+        <FUSE_OC_ENABLED>
+            <val>0</val>
+        </FUSE_OC_ENABLED> <!-- value taken from fuse_def -->
+
+        <PCU_MISC_CONFIG_ILLEGAL_MASK>
+            <val>3514822149</val>
+        </PCU_MISC_CONFIG_ILLEGAL_MASK>
+
+        <!-- VR details -->
+        <DMR_VALID_VR_ADDRESS>
+            <val>[0, 1, 2, 3, 4, 13]</val>
+        </DMR_VALID_VR_ADDRESS>
+        <DMR_VALID_VR_DRAM_ADDR>
+            <val>0</val>
+        </DMR_VALID_VR_DRAM_ADDR>
+
+        <SVID_NOT_PRESENT>
+            <val>1</val>
+        </SVID_NOT_PRESENT>
+        <SVID_IP_PRESENT>
+            <val>0</val>
+        </SVID_IP_PRESENT>
+        <WA_INDEX>
+            <val>1</val>
+        </WA_INDEX>
+        <ALWAYS_TRUE>
+            <val>1</val>
+        </ALWAYS_TRUE>
+        <OPC_THERMAL_MONITOR_INBAND_LOCK>
+            <val>0</val>
+        </OPC_THERMAL_MONITOR_INBAND_LOCK>
+        <!-- Invalid sub-cmd for PM_CONFIG -->
+        <PM_CONFIG_SUBCMD_MIN_ICCP_LEVEL>
+             <val>2</val>
+        </PM_CONFIG_SUBCMD_MIN_ICCP_LEVEL>
+        <PM_CONFIG_SUBCMD_PROG_SSC_CONTROL>
+             <val>7</val>
+        </PM_CONFIG_SUBCMD_PROG_SSC_CONTROL>
+
+    </spec_globals>
+</bios_error_codes>
+
+
