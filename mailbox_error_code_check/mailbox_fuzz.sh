@@ -52,8 +52,7 @@ do
         else
             echo "ERROR : issue with the trace $filename"
             break
-        fi
-      
+        fi 
     fi
     
 done
