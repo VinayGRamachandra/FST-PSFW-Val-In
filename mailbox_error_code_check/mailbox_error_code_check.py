@@ -5,9 +5,7 @@ import xml.etree.ElementTree as ET
 import pprint
 import re
 from collections import defaultdict
-
-
-
+import os
 
 
 
@@ -59,7 +57,7 @@ def parse_internal_xml(tree, root):
                             spec[command_name]["data_in"][field_data.find("name").text] = {'lsb':int(field_data.find('lsb').text),
                                                                                 'num_bits':int(field_data.find('num_bits').text)}
     
-    return spec, command_type
+    return spec
 
 def parse_bios_xml(tree, root):
     command_elements = root.findall(".//command")
@@ -100,7 +98,7 @@ def parse_bios_xml(tree, root):
                                                 spec[command_name]["interface"][field.find("name").text][enum.attrib["key"]]["data_in"][field_data.find('name').text] = {"lsb":int(field_data.find('lsb').text), 
                                                                                                                                                                          "num_bits":int(field_data.find('num_bits').text)}
                             
-    return spec,command_type
+    return spec
 
 def parse_error_codes_xml(xml_file_path):
     tree = ET.parse(xml_file_path)
@@ -350,7 +348,7 @@ def get_operand_val(operand, trace, spec, error_codes, spec_globals):
         else:
             val = int(oper)
     return val
-
+    
 
 def process_rule(rule, trace, spec, error_codes, spec_globals):
     out = False
@@ -387,12 +385,23 @@ def process_cmd_rules(cmd_key, trace, spec, error_codes, spec_globals):
 
 ##mbox_sweep
 
-spec_xml_file_path = "internal_u2p_tap_mailbox.xml"
-spec, command_type = parse_spec_xml(spec_xml_file_path)
-checkers_xml_file_path = f'{command_type}_error_codes.xml'
+model_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '..'))
+command_type = os.environ.get('command_type')
+print(f'command_type === {command_type}')
+#spec_xml_file_path = os.path.join(model_root, 'src', 'pcode','src','flow','mailbox','bios','v3_0','bios_mailbox.xml')
+if command_type == 'internal':
+    spec_xml_file_path = os.path.join(model_root, 'src', 'pcode','src','flow','mailbox','internal','internal_common','v1_0','internal_u2p_tap_mailbox.xml')
+elif command_type == 'bios':
+    spec_xml_file_path = os.path.join(model_root, 'src', 'pcode','src','flow','mailbox','bios','v3_0','bios_mailbox.xml')
+spec = parse_spec_xml(spec_xml_file_path)
+
+
+#checkers_xml_file_path = f'{command_type}_error_codes.xml'
+checkers_xml_file_path = os.path.join(model_root, 'verif', 'tests','fox2','kiwi', 'helper_scripts',f'{command_type}_error_codes.xml')
 error_codes, spec_globals = parse_error_codes_xml(checkers_xml_file_path)
 
-trace_tree = ET.parse(f'{command_type}_fuzzing_log.xml')
+trace_tree_file_path = os.path.join(model_root,'regressions' ,'mailbox_fuzzing_log.xml')
+trace_tree = ET.parse(trace_tree_file_path)
 trace_root = trace_tree.getroot()
 if trace_root.findall('file') is not None:
     for file in trace_root.findall('file'):
@@ -416,7 +425,8 @@ if trace_root.findall('file') is not None:
                 if error_codes.get(cmd_key) is None:
                     add_test_remark.text = 'NO ERROR CODES Defined'
                     if mbox_cmd.find('./response/error') is not None:
-                     if mbox_cmd.find('./response/error').text == 'NONE':
+                     if mbox_cmd.find('./response/error').text in ['NONE', 'NO_ERROR']:
+                         #if mbox_cmd.find('./response/error').text == 'NONE'  'NO_ERROR':
                         add_test_result.text = 'PASS'
                      else:
                         add_test_result.text = 'FAIL'
@@ -433,13 +443,14 @@ if trace_root.findall('file') is not None:
                             add_test_result.text = 'PASS'
                     else:
                         if mbox_cmd.find('./response/error') is not None: 
-                         if mbox_cmd.find('./response/error').text == 'NONE':
+                         if mbox_cmd.find('./response/error').text in ['NONE', 'NO_ERROR']:
                             add_test_result.text = 'PASS'          
         
                 mbox_cmd.append(add_test_result)
                 mbox_cmd.append(add_test_remark)
-               
-trace_tree.write("trace_out.xml")
+
+trace_out_file_path = os.path.join(model_root, 'verif', 'tests','fox2','kiwi', 'helper_scripts','trace_out.xml')
+trace_tree.write(trace_out_file_path)
 
 
 def trace_stats(trace_out_file_path):
@@ -477,5 +488,5 @@ def trace_stats(trace_out_file_path):
      
     return crash_count 
 
-trace_out_file_path = "trace_out.xml"
+trace_out_file_path = os.path.join(model_root, 'verif', 'tests','fox2','kiwi', 'helper_scripts','trace_out.xml')
 stats= trace_stats(trace_out_file_path)
