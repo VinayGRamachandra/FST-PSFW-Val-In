@@ -1,5 +1,49 @@
 <?xml version="1.0"?>
 
+<!--   Description and Usage Manual    -->
+
+<!-- 
+
+Error codes are specific error conditions that are communicated between different IP's via a mailbox.
+
+Why this error codes xml?
+To show the objectives and logic behind each error code defined in the specification document
+To implement the same logic with the help of python script and verify the volume validation outputs.
+
+
+what is spec and trace dictionaries?
+
+spec ->
+is a dictionary which contains mailbox specification information(command, subcommand, opcode, interface, data) parsed from it's respective XML document 
+
+trace ->
+is a dictionary which contains specific interface and data register values written into each command. 
+The interface and data values of each command is obtained by fuzzing log generated for 'n' iterations using kiwi framework.
+
+
+What are field, key, tag and globals?
+
+key -> 
+key is used to get the 'value' of various subcommand fields of a command (refer mailbox specification document to know about 'value' of the sucommand)  
+
+
+field ->
+field is used to obtain values of the registers specified in 'field' section of the mailbox specification document
+
+
+tag ->
+tag is used to obtain the stage, phase(CPL) values of the specific command
+
+
+globals ->
+globals is used to obtain the values from the "globals" section which is present at the end of this document. 
+
+why globals is used?
+To check some conditions of error codes with respect to some constant value which couldn't be obtained from mailbox specification document.
+
+-->
+
+
 <bios_error_codes>
 
 
@@ -133,7 +177,7 @@
 
 
     
-    <spec_globals>
+    <globals>
         <!-- CPL Phase -->
         <CPL1>
             <val>1</val>
@@ -197,7 +241,7 @@
              <val>7</val>
         </PM_CONFIG_SUBCMD_PROG_SSC_CONTROL>
 
-    </spec_globals>
+    </globals>
 </bios_error_codes>
 
 
