@@ -235,7 +235,7 @@ def apply_arthimetic_operator(operator_str, *args):
         '/': lambda x, y: x / y if y != 0 else None,
     }
 
-    if operator_str in operations:
+    if operator_str in arthimetic_operations:
         return arthimetic_operations[operator_str](*args)
     else:
         return None
@@ -460,7 +460,8 @@ def trace_stats(trace_out_file_path):
     crash_count = 0
     test_pass = 0
     test_fail = 0
-    unique_cmd_name_list = [] 
+    unique_cmd_name_list = []
+    num_commands = 0
     
     for file in root.findall('.//file'):
         command_type = file.find('type').text
